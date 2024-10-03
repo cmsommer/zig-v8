@@ -28,12 +28,26 @@ pub fn build(b: *Builder) !void {
     const test_step = b.addRunArtifact(tests);
     b.step("test", "Run unit tests").dependOn(&test_step.step);
 
+    const shell_exe = createBuildExeStep(b, "src/shell.zig", target, mode, use_zig_tc);
     const build_exe = createBuildExeStep(b, path, target, mode, use_zig_tc);
 
-    const run_exe = b.addRunArtifact(build_exe);
+    const run_exe = b.addRunArtifact(shell_exe);
+    const path_exe = b.addRunArtifact(build_exe);
+
     b.step("run", "Run with main file at -Dpath").dependOn(&run_exe.step);
+    b.step("run-path", "Run with main file at -Dpath").dependOn(&path_exe.step);
 
     b.default_step.dependOn(v8);
+
+    const mod = b.addModule("zig-v8", .{
+        .root_source_file = b.path("src/v8.zig"),
+        .target = target,
+        .optimize = mode,
+        .link_libc = true,
+    });
+
+    mod.addIncludePath(b.path("src"));
+    linkV8Mod(b, mod, mode, target, use_zig_tc);
 }
 
 // When this is true, we'll strip V8 features down to a minimum so the resulting library is smaller.
@@ -473,7 +487,38 @@ const CopyFileStep = struct {
     }
 };
 
-// TODO: Make this usable from external project.
+fn linkV8Mod(b: *Builder, mod: *std.Build.Module, mode: std.builtin.OptimizeMode, target: std.Build.ResolvedTarget, use_zig_tc: bool) void {
+    const mode_str: []const u8 = if (mode == .Debug) "debug" else "release";
+    const lib: []const u8 = if (target.result.os.tag == .windows and target.result.abi == .msvc) "c_v8.lib" else "libc_v8.a";
+    const lib_path = std.fmt.allocPrint(b.allocator, "./v8-build/{s}/{s}/ninja/obj/zig/{s}", .{
+        getTargetId(b.allocator, target),
+        mode_str,
+        lib,
+    }) catch unreachable;
+    mod.addAssemblyFile(b.path(lib_path));
+    if (builtin.os.tag == .linux) {
+        if (use_zig_tc) {
+            // TODO: This should be linked already when we built v8.
+            mod.link_libcpp = true;
+        }
+        mod.linkSystemLibrary("unwind", .{});
+    } else if (target.result.os.tag == .windows) {
+        if (target.result.abi == .gnu) {
+            mod.linkLibCpp();
+        } else {
+            mod.linkSystemLibrary("Dbghelp", .{});
+            mod.linkSystemLibrary("Winmm", .{});
+            mod.linkSystemLibrary("Advapi32", .{});
+
+            // We need libcpmt to statically link with c++ stl for exception_ptr references from V8.
+            // Zig already adds the SDK path to the linker but doesn't sync it to the internal libs array which linkSystemLibrary checks against.
+            // For now we'll hardcode the MSVC path here.
+            mod.addLibraryPath(b.path("C:/Program Files (x86)/Microsoft Visual Studio/2019/Community/VC/Tools/MSVC/14.29.30133/lib/x64"));
+            mod.linkSystemLibrary("libcpmt", .{});
+        }
+    }
+}
+
 fn linkV8(b: *Builder, step: *std.Build.Step.Compile, mode: std.builtin.OptimizeMode, target: std.Build.ResolvedTarget, use_zig_tc: bool) void {
     const mode_str: []const u8 = if (mode == .Debug) "debug" else "release";
     const lib: []const u8 = if (target.result.os.tag == .windows and target.result.abi == .msvc) "c_v8.lib" else "libc_v8.a";
@@ -709,8 +754,6 @@ pub const GetV8SourceStep = struct {
 };
 
 fn createBuildExeStep(b: *Builder, path: []const u8, target: std.Build.ResolvedTarget, mode: std.builtin.OptimizeMode, use_zig_tc: bool) *std.Build.Step.Compile {
-    _ = b.step("exe", "Build exe with main file at -Dpath");
-
     const basename = std.fs.path.basename(path);
     const i = std.mem.indexOf(u8, basename, ".zig") orelse basename.len;
     const name = basename[0..i];

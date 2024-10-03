@@ -1,9 +1,11 @@
-/zig-cache/
+zig-cache/
+.zig-cache/
+zig-out/
+
 /tools/ninja_gn_binaries*
 /v8-build/
 /gclient/
 /v8/
-/zig-out/
 /vendor
 /libc_v8.a
 /tools/
