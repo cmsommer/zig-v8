@@ -50,10 +50,6 @@ pub fn build(b: *Builder) !void {
     linkV8Mod(b, mod, mode, target, use_zig_tc);
 }
 
-// When this is true, we'll strip V8 features down to a minimum so the resulting library is smaller.
-// eg. i18n will be excluded.
-const MinimalV8 = true;
-
 // gclient is comprehensive and will pull everything for the v8 project.
 // Set this to false to pull the minimal required src by parsing v8/DEPS and whitelisting deps we care about.
 const UseGclient = false;
@@ -63,6 +59,7 @@ const UseGclient = false;
 // For now we just use gn/ninja like rusty_v8 does: https://github.com/denoland/rusty_v8/blob/main/build.rs
 fn createV8_Build(b: *Builder, target: std.Build.ResolvedTarget, mode: std.builtin.OptimizeMode, use_zig_tc: bool) !*std.Build.Step {
     const step = b.step("v8", "Build v8 c binding lib.");
+    const minimal = b.option(bool, "full-build", "Build minimal v8 version. We'll strip V8 features down to a minimum so the resulting library is smaller. eg. i18n will be excluded") orelse false;
 
     if (UseGclient) {
         const mkpath = MakePathStep.create(b, "./gclient/v8/zig");
@@ -130,7 +127,7 @@ fn createV8_Build(b: *Builder, target: std.Build.ResolvedTarget, mode: std.built
         // TODO: Might want to turn V8_ENABLE_CHECKS off to remove asserts.
     }
 
-    if (MinimalV8) {
+    if (!minimal) {
         // Don't add i18n for now. It has a large dependency on third_party/icu.
         try gn_args.append("v8_enable_i18n_support=false");
     }
