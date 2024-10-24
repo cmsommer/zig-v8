@@ -441,8 +441,8 @@ const MakePathStep = struct {
         };
         return new;
     }
-    fn make(step: *std.Build.Step, prog_node: std.Progress.Node) anyerror!void {
-        _ = prog_node;
+    fn make(step: *std.Build.Step, options: std.Build.Step.MakeOptions) anyerror!void {
+        _ = options; // autofix
         const self: *Self = @fieldParentPtr("step", step);
         const cwd = fs.cwd();
 
@@ -477,8 +477,8 @@ const CopyFileStep = struct {
         return new;
     }
 
-    fn make(step: *std.Build.Step, prog_node: std.Progress.Node) anyerror!void {
-        _ = prog_node;
+    fn make(step: *std.Build.Step, options: std.Build.Step.MakeOptions) anyerror!void {
+        _ = options; // autofix
         const self: *Self = @fieldParentPtr("step", step);
         try std.fs.copyFileAbsolute(self.src_path, self.dst_path, .{});
     }
@@ -663,8 +663,8 @@ pub const GetV8SourceStep = struct {
         }
     }
 
-    fn make(step: *Step, prog_node: std.Progress.Node) !void {
-        _ = prog_node;
+    fn make(step: *Step, options: std.Build.Step.MakeOptions) !void {
+        _ = options; // autofix
         const self: *Self = @fieldParentPtr("step", step);
 
         // Pull the minimum source we need by looking at DEPS.
