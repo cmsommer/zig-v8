@@ -978,7 +978,7 @@ pub const Object = struct {
         var out: c.MaybeBool = undefined;
         c.v8__Object__Set(self.handle, ctx.handle, getValueHandle(key), getValueHandle(value), &out);
         // Set only returns empty for an error or true.
-        return out.has_value == 1;
+        return out.has_value == true;
     }
 
     pub fn getValue(self: Self, ctx: Context, key: anytype) !Value {
@@ -1192,7 +1192,7 @@ inline fn getValueHandle(val: anytype) *const c.Value {
 }
 
 inline fn getNameHandle(val: anytype) *const c.Name {
-    return @ptrCast(comptime switch (@TypeOf(val)) {
+    return @ptrCast(switch (@TypeOf(val)) {
         *const c.String => val,
         String => val.handle,
         else => @compileError(std.fmt.comptimePrint("{s} is not a subtype of v8::Name", .{@typeName(@TypeOf(val))})),
@@ -1200,7 +1200,7 @@ inline fn getNameHandle(val: anytype) *const c.Name {
 }
 
 inline fn getTemplateHandle(val: anytype) *const c.Template {
-    return @ptrCast(comptime switch (@TypeOf(val)) {
+    return @ptrCast(switch (@TypeOf(val)) {
         FunctionTemplate => val.handle,
         ObjectTemplate => val.handle,
         else => @compileError(std.fmt.comptimePrint("{s} is not a subtype of v8::Template", .{@typeName(@TypeOf(val))})),
@@ -1208,10 +1208,11 @@ inline fn getTemplateHandle(val: anytype) *const c.Template {
 }
 
 inline fn getDataHandle(val: anytype) *const c.Data {
-    return @ptrCast(comptime switch (@TypeOf(val)) {
+    return @ptrCast(switch (@TypeOf(val)) {
         FunctionTemplate => val.handle,
         ObjectTemplate => val.handle,
         Integer => val.handle,
+        String => val.handle,
         Function => val.handle,
         Context => val.handle,
         Object => val.handle,
