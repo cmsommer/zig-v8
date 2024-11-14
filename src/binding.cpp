@@ -688,6 +688,12 @@ const v8::Value* v8__Promise__Result(const v8::Promise& self) {
 
 // Value
 
+const v8::Object* v8__Value__ToObject(
+        const v8::Value& self,
+        const v8::Context& ctx) {
+    return maybe_local_to_ptr(self.ToObject(ptr_to_local(&ctx)));
+}
+
 const v8::String* v8__Value__ToString(
         const v8::Value& self,
         const v8::Context& ctx) {

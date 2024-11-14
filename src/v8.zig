@@ -1006,8 +1006,8 @@ pub const Object = struct {
     pub fn defineOwnProperty(self: Self, ctx: Context, name: anytype, value: anytype, attr: c.PropertyAttribute) ?bool {
         var out: c.MaybeBool = undefined;
         c.v8__Object__DefineOwnProperty(self.handle, ctx.handle, getNameHandle(name), getValueHandle(value), attr, &out);
-        if (out.has_value == 1) {
-            return out.value == 1;
+        if (out.has_value == true) {
+            return out.value == true;
         } else return null;
     }
 
@@ -1727,6 +1727,12 @@ pub const Value = struct {
     pub fn toString(self: Self, ctx: Context) !String {
         return String{
             .handle = c.v8__Value__ToString(self.handle, ctx.handle) orelse return error.JsException,
+        };
+    }
+
+    pub fn toObject(self: Self, ctx: Context) !Object {
+        return Object{
+            .handle = c.v8__Value__ToObject(self.handle, ctx.handle) orelse return error.JsException,
         };
     }
 

@@ -370,6 +370,9 @@ int v8__String__WriteUtf8(const String* str, Isolate* isolate, const char* buf, 
 int v8__String__Utf8Length(const String* str, Isolate* isolate);
 
 // Value
+Object* v8__Value__ToObject(
+    const Value* self,
+    const Context* ctx);
 String* v8__Value__ToString(
     const Value* self,
     const Context* ctx);
