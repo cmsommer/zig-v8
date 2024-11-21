@@ -959,6 +959,31 @@ pub const Object = struct {
         };
     }
 
+    pub fn getPropAsInt(self: Self, isolate: Isolate, name: []const u8) ![]const u8 {
+        const ctx = isolate.getCurrentContext();
+
+        const key = String.initUtf8(isolate, name);
+        const val = try self.getValue(ctx, key);
+
+        const num = val.toI32(ctx) catch unreachable;
+        _ = num; // autofix
+    }
+
+    pub fn getPropAsStr(self: Self, isolate: Isolate, name: []const u8) ![]const u8 {
+        const ctx = isolate.getCurrentContext();
+
+        const key = String.initUtf8(isolate, name);
+        const val = try self.getValue(ctx, key);
+
+        const str = try val.toString(ctx);
+
+        const length = str.lenUtf8(isolate);
+        const prop: []const u8 = try std.heap.page_allocator.alloc(u8, length);
+        _ = str.writeUtf8(isolate, prop);
+
+        return prop;
+    }
+
     pub fn setInternalField(self: Self, idx: u32, value: anytype) void {
         c.v8__Object__SetInternalField(self.handle, @intCast(idx), getValueHandle(value));
     }
