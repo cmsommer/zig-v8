@@ -932,6 +932,12 @@ pub const Array = struct {
         };
     }
 
+    pub fn get(self: Self, ctx: Context, idx: u32) Data {
+        return .{
+            .handle = c.v8__Array__Get(self.handle, ctx.handle, @intCast(idx)).?,
+        };
+    }
+
     pub fn length(self: Self) u32 {
         return c.v8__Array__Length(self.handle);
     }
@@ -982,6 +988,28 @@ pub const Object = struct {
         _ = str.writeUtf8(isolate, prop);
 
         return prop;
+    }
+
+    pub fn getPropAsArr(self: Self, comptime T: type, isolate: Isolate, name: []const u8) ![]T {
+        const ctx = isolate.getCurrentContext();
+
+        const key = String.initUtf8(isolate, name);
+        const val = try self.getValue(ctx, key);
+
+        if (val.isNullOrUndefined()) {
+            return error.ValueNullError;
+        }
+
+        if (val.isArray()) {
+            const v8Arr = val.castTo(Array);
+            const length = v8Arr.length();
+
+            const arr = try std.heap.c_allocator.alloc(T, length);
+
+            return arr;
+        }
+
+        return error.ConvertError;
     }
 
     pub fn setInternalField(self: Self, idx: u32, value: anytype) void {
@@ -1238,6 +1266,7 @@ inline fn getDataHandle(val: anytype) *const c.Data {
         ObjectTemplate => val.handle,
         Integer => val.handle,
         String => val.handle,
+        Array => val.handle,
         Function => val.handle,
         Context => val.handle,
         Object => val.handle,

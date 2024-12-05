@@ -459,6 +459,11 @@ const Array* v8__Array__New2(
     const Value* const elements[],
     size_t length);
 uint32_t v8__Array__Length(const Array* self);
+const Value* v8__Array__Get(
+    const Array* self,
+    const Context* context,
+    int index
+);
 
 // Object
 const Object* v8__Object__New(Isolate* isolate);
