@@ -1012,6 +1012,24 @@ pub const Object = struct {
         return error.ConvertError;
     }
 
+    pub fn getPropAsObj(self: Self, isolate: Isolate, name: []const u8) !Object {
+        const ctx = isolate.getCurrentContext();
+
+        const key = String.initUtf8(isolate, name);
+        const val = try self.getValue(ctx, key);
+
+        if (val.isNullOrUndefined()) {
+            return error.ValueNullError;
+        }
+
+        if (val.isObject()) {
+            const obj = val.castTo(Object);
+            return obj;
+        }
+
+        return error.ConvertError;
+    }
+
     pub fn setInternalField(self: Self, idx: u32, value: anytype) void {
         c.v8__Object__SetInternalField(self.handle, @intCast(idx), getValueHandle(value));
     }
