@@ -501,7 +501,7 @@ fn linkV8Mod(b: *Builder, mod: *std.Build.Module, mode: std.builtin.OptimizeMode
         mod.linkSystemLibrary("unwind", .{});
     } else if (target.result.os.tag == .windows) {
         if (target.result.abi == .gnu) {
-            mod.linkLibCpp();
+            mod.link_libcpp = true;
         } else {
             mod.linkSystemLibrary("Dbghelp", .{});
             mod.linkSystemLibrary("Winmm", .{});

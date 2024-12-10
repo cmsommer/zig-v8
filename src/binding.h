@@ -464,9 +464,15 @@ const Value* v8__Array__Get(
     const Context* context,
     int index
 );
+void v8__Array__Set(
+    const Array* self,
+    const Context* context,
+    int index,
+    const Value* value,
+    MaybeBool* out);
 
-// Object
-const Object* v8__Object__New(Isolate* isolate);
+    // Object
+    const Object *v8__Object__New(Isolate *isolate);
 const Value* v8__Object__GetInternalField(
     const Object* self,
     int index);

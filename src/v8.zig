@@ -938,6 +938,14 @@ pub const Array = struct {
         };
     }
 
+    pub fn set(self: Self, ctx: Context, index: u32, value: Value) bool {
+        var out: c.MaybeBool = undefined;
+        c.v8__Array__Set(self.handle, ctx.handle, @intCast(index), value.handle, &out);
+        if (out.has_value == true) {
+            return out.value == true;
+        } else return false;
+    }
+
     pub fn length(self: Self) u32 {
         return c.v8__Array__Length(self.handle);
     }
@@ -990,7 +998,7 @@ pub const Object = struct {
         return prop;
     }
 
-    pub fn getPropAsArr(self: Self, comptime T: type, isolate: Isolate, name: []const u8) ![]T {
+    pub fn getPropAsArr(self: Self, isolate: Isolate, name: []const u8) !Array {
         const ctx = isolate.getCurrentContext();
 
         const key = String.initUtf8(isolate, name);
@@ -1001,11 +1009,7 @@ pub const Object = struct {
         }
 
         if (val.isArray()) {
-            const v8Arr = val.castTo(Array);
-            const length = v8Arr.length();
-
-            const arr = try std.heap.c_allocator.alloc(T, length);
-
+            const arr = val.castTo(Array);
             return arr;
         }
 

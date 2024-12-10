@@ -863,6 +863,16 @@ const v8::Value* v8__Array__Get(
     );
 }
 
+void v8__Array__Set(
+    const v8::Array &self,
+    const v8::Context &context,
+    int index,
+    const v8::Value &value,
+    v8::Maybe<bool> *out)
+{
+    *out = ptr_to_local(&self)->Set(ptr_to_local(&context), index, ptr_to_local(&value));
+}
+
 uint32_t v8__Array__Length(const v8::Array& self) { return self.Length(); }
 
 // Object
