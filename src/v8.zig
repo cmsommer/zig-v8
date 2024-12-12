@@ -1785,6 +1785,11 @@ pub const Data = struct {
     /// Should only be called if you know the underlying type.
     pub fn castTo(self: Self, comptime T: type) T {
         switch (T) {
+            Object => {
+                return .{
+                    .handle = self.handle,
+                };
+            },
             ModuleRequest => {
                 return .{
                     .handle = self.handle,
