@@ -973,14 +973,14 @@ pub const Object = struct {
         };
     }
 
-    pub fn getPropAsInt(self: Self, isolate: Isolate, name: []const u8) ![]const u8 {
+    pub fn getPropAsInt(self: Self, isolate: Isolate, name: []const u8) !i32 {
         const ctx = isolate.getCurrentContext();
 
         const key = String.initUtf8(isolate, name);
         const val = try self.getValue(ctx, key);
 
         const num = val.toI32(ctx) catch unreachable;
-        _ = num; // autofix
+        return num;
     }
 
     pub fn getPropAsStr(self: Self, isolate: Isolate, name: []const u8) ![]const u8 {
@@ -1078,9 +1078,11 @@ pub const Object = struct {
         };
     }
 
-    pub fn defineOwnProperty(self: Self, ctx: Context, name: anytype, value: anytype, attr: c.PropertyAttribute) ?bool {
+    pub fn defineOwnProperty(self: Self, ctx: Context, name: []const u8, value: anytype, attr: c.PropertyAttribute) ?bool {
+        const nameV8 = ctx.getIsolate().initStringUtf8(name);
+
         var out: c.MaybeBool = undefined;
-        c.v8__Object__DefineOwnProperty(self.handle, ctx.handle, getNameHandle(name), getValueHandle(value), attr, &out);
+        c.v8__Object__DefineOwnProperty(self.handle, ctx.handle, getNameHandle(nameV8), getValueHandle(value), attr, &out);
         if (out.has_value == true) {
             return out.value == true;
         } else return null;
@@ -1105,8 +1107,8 @@ pub const Object = struct {
     pub fn has(self: Self, ctx: Context, key: Value) bool {
         var out: c.MaybeBool = undefined;
         c.v8__Object__Has(self.handle, ctx.handle, key.handle, &out);
-        if (out.has_value == 1) {
-            return out.value == 1;
+        if (out.has_value == true) {
+            return out.value == true;
         } else return false;
     }
 
@@ -1830,7 +1832,7 @@ pub const Value = struct {
     pub fn toI32(self: Self, ctx: Context) !i32 {
         var out: c.MaybeI32 = undefined;
         c.v8__Value__Int32Value(self.handle, ctx.handle, &out);
-        if (out.has_value == 1) {
+        if (out.has_value == true) {
             return out.value;
         } else return error.JsException;
     }
