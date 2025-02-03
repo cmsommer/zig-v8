@@ -1115,8 +1115,8 @@ pub const Object = struct {
     pub fn hasIndex(self: Self, ctx: Context, idx: u32) bool {
         var out: c.MaybeBool = undefined;
         c.v8__Object__Has(self.handle, ctx.handle, idx, &out);
-        if (out.has_value == 1) {
-            return out.value == 1;
+        if (out.has_value == true) {
+            return out.value == true;
         } else return false;
     }
 
