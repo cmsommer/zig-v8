@@ -1034,6 +1034,16 @@ pub const Object = struct {
         return error.ConvertError;
     }
 
+    pub fn getProp(self: Self, ctx: Context, key: []const u8) !Value {
+        const keyV8 = ctx.getIsolate().initStringUtf8(key);
+
+        if (c.v8__Object__Get(self.handle, ctx.handle, getValueHandle(keyV8))) |handle| {
+            return Value{
+                .handle = handle,
+            };
+        } else return error.JsException;
+    }
+
     pub fn setInternalField(self: Self, idx: u32, value: anytype) void {
         c.v8__Object__SetInternalField(self.handle, @intCast(idx), getValueHandle(value));
     }
@@ -1823,6 +1833,15 @@ pub const Value = struct {
         return String{
             .handle = c.v8__Value__ToDetailString(self.handle, ctx.handle) orelse return error.JsException,
         };
+    }
+
+    pub fn getAsStr(self: Self, ctx: Context) ![]const u8 {
+        const str = try self.toString(ctx);
+        const length = str.lenUtf8(ctx.getIsolate());
+        const prop: []const u8 = try std.heap.page_allocator.alloc(u8, length);
+        _ = str.writeUtf8(ctx.getIsolate(), prop);
+
+        return prop;
     }
 
     pub fn toBool(self: Self, isolate: Isolate) bool {
