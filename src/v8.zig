@@ -932,10 +932,18 @@ pub const Array = struct {
         };
     }
 
-    pub fn get(self: Self, ctx: Context, idx: u32) Data {
+    pub fn get(self: Self, ctx: Context, idx: u32) Value {
         return .{
             .handle = c.v8__Array__Get(self.handle, ctx.handle, @intCast(idx)).?,
         };
+    }
+
+    pub fn getAsStr(self: Self, ctx: Context, idx: u32) !String {
+        const a = get(self, ctx, idx);
+
+        if (a.isString()) {
+            return a.toString(ctx);
+        } else return error.ConvertError;
     }
 
     pub fn set(self: Self, ctx: Context, index: u32, value: Value) bool {
@@ -1596,6 +1604,13 @@ pub const String = struct {
             .handle = self.handle,
         };
     }
+
+    pub fn toStr(self: Self, isolate: Isolate) ![]const u8 {
+        const len = self.lenUtf8(isolate);
+        const buf: []const u8 = try std.heap.page_allocator.alloc(u8, len);
+        _ = self.writeUtf8(isolate, buf);
+        return buf;
+    }
 };
 
 pub const ScriptCompilerSource = struct {
@@ -1837,6 +1852,7 @@ pub const Value = struct {
 
     pub fn getAsStr(self: Self, ctx: Context) ![]const u8 {
         const str = try self.toString(ctx);
+
         const length = str.lenUtf8(ctx.getIsolate());
         const prop: []const u8 = try std.heap.page_allocator.alloc(u8, length);
         _ = str.writeUtf8(ctx.getIsolate(), prop);
