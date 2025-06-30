@@ -1,6 +1,7 @@
 .{
-    .name = "zig-v8",
+    .name = .zig_v8,
     .version = "0.1.0",
+    .fingerprint = 0x1f2f5ae1c61c784b,
     .dependencies = .{},
     .paths = .{
         "LICENSE",
